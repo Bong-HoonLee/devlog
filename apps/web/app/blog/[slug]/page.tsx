@@ -20,9 +20,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post) return {};
 
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://devlog.vercel.app";
+
   return {
     title: post.title,
     description: post.excerpt ?? undefined,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt ?? undefined,
+      type: "article",
+      images: [
+        `${BASE_URL}/api/og?title=${encodeURIComponent(post.title)}`,
+      ],
+    },
   };
 }
 
@@ -41,7 +51,25 @@ export default async function PostPage({ params }: Props) {
     Promise.resolve(extractHeadings(post.content)),
   ]);
 
+  const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://devlog.vercel.app";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt ?? undefined,
+    datePublished: post.publishedAt?.toISOString(),
+    dateModified: post.updatedAt.toISOString(),
+    url: `${BASE_URL}/blog/${post.slug}`,
+    image: `${BASE_URL}/api/og?title=${encodeURIComponent(post.title)}`,
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     <div className="relative flex gap-12">
       <article className="min-w-0 flex-1">
         <header className="space-y-4 border-b border-gray-200 pb-6 dark:border-gray-800">
@@ -81,5 +109,6 @@ export default async function PostPage({ params }: Props) {
 
       <Toc headings={headings} />
     </div>
+    </>
   );
 }
