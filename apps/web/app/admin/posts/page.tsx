@@ -40,10 +40,12 @@ export default async function AdminPostsPage() {
                     className={
                       post.status === "published"
                         ? "text-green-600 dark:text-green-400"
-                        : "text-yellow-600 dark:text-yellow-400"
+                        : post.status === "scheduled"
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-yellow-600 dark:text-yellow-400"
                     }
                   >
-                    {post.status === "published" ? "발행됨" : "임시저장"}
+                    {post.status === "published" ? "발행됨" : post.status === "scheduled" ? "예약됨" : "임시저장"}
                   </span>
                   <span>{formatDate(post.createdAt)}</span>
                   {post.tags.length > 0 && (

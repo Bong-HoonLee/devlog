@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useRef, useCallback, useEffect } from "react";
 import { TiptapEditor } from "./tiptap-editor";
+import { autoSavePost } from "@/actions/posts";
 
 interface PostEditorProps {
   action: (prevState: string | null, formData: FormData) => Promise<string | null>;
@@ -11,16 +12,54 @@ interface PostEditorProps {
     excerpt: string;
     tags: string;
     status: string;
+    scheduledAt?: string;
   };
+  postId?: string;
 }
 
-export function PostEditor({ action, initialData }: PostEditorProps) {
+export function PostEditor({ action, initialData, postId }: PostEditorProps) {
   const [error, formAction, isPending] = useActionState(action, null);
+  const [status, setStatus] = useState(initialData?.status ?? "draft");
+  const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleAutoSave = useCallback(() => {
+    if (!postId || !formRef.current) return;
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+
+    autoSaveTimer.current = setTimeout(async () => {
+      const fd = new FormData(formRef.current!);
+      try {
+        await autoSavePost(postId, {
+          title: fd.get("title") as string,
+          content: fd.get("content") as string,
+          excerpt: fd.get("excerpt") as string,
+          tags: fd.get("tags") as string,
+        });
+        setAutoSaveStatus("자동 저장됨");
+        setTimeout(() => setAutoSaveStatus(""), 3000);
+      } catch {
+        setAutoSaveStatus("자동 저장 실패");
+      }
+    }, 5000);
+  }, [postId]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form ref={formRef} action={formAction} className="space-y-6" onChange={handleAutoSave}>
       {error && (
         <p className="text-sm text-red-500">{error}</p>
+      )}
+
+      {autoSaveStatus && (
+        <p className="text-xs text-green-600 dark:text-green-400">{autoSaveStatus}</p>
       )}
 
       <div className="space-y-2">
@@ -71,15 +110,27 @@ export function PostEditor({ action, initialData }: PostEditorProps) {
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <select
           name="status"
-          defaultValue={initialData?.status ?? "draft"}
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
           className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
         >
           <option value="draft">임시저장</option>
           <option value="published">발행</option>
+          <option value="scheduled">예약 발행</option>
         </select>
+
+        {status === "scheduled" && (
+          <input
+            name="scheduledAt"
+            type="datetime-local"
+            defaultValue={initialData?.scheduledAt}
+            required
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          />
+        )}
 
         <button
           type="submit"

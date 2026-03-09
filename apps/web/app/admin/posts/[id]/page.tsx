@@ -27,12 +27,14 @@ export default async function EditPostPage({
       <h2 className="text-xl font-semibold">글 수정</h2>
       <PostEditor
         action={action}
+        postId={id}
         initialData={{
           title: post.title,
           content: post.content,
           excerpt: post.excerpt ?? "",
           tags: post.tags.map((pt: { tag: { name: string } }) => pt.tag.name).join(", "),
           status: post.status,
+          scheduledAt: post.scheduledAt?.toISOString().slice(0, 16),
         }}
       />
     </div>

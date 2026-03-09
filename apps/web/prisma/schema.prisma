@@ -14,8 +14,9 @@ model Post {
   slug        String    @unique
   content     String
   excerpt     String?
-  status      String    @default("draft")
-  publishedAt DateTime?
+  status       String    @default("draft")
+  publishedAt  DateTime?
+  scheduledAt  DateTime?
   viewCount   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

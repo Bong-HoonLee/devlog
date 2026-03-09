@@ -21,6 +21,7 @@ export async function createPost(formData: FormData) {
   const content = formData.get("content") as string;
   const excerpt = formData.get("excerpt") as string | null;
   const status = formData.get("status") as string;
+  const scheduledAt = formData.get("scheduledAt") as string | null;
   const tags = (formData.get("tags") as string)
     ?.split(",")
     .map((t: string) => t.trim())
@@ -28,14 +29,16 @@ export async function createPost(formData: FormData) {
 
   const slug = slugify(title);
 
+  const isScheduled = status === "scheduled" && scheduledAt;
   const post = await prisma.post.create({
     data: {
       title,
       slug,
       content,
       excerpt: excerpt || null,
-      status,
+      status: isScheduled ? "scheduled" : status,
       publishedAt: status === "published" ? new Date() : null,
+      scheduledAt: isScheduled ? new Date(scheduledAt) : null,
       tags: tags?.length
         ? {
             create: tags.map((tagName: string) => ({
@@ -63,6 +66,7 @@ export async function updatePost(id: string, formData: FormData) {
   const content = formData.get("content") as string;
   const excerpt = formData.get("excerpt") as string | null;
   const status = formData.get("status") as string;
+  const scheduledAt = formData.get("scheduledAt") as string | null;
   const tags = (formData.get("tags") as string)
     ?.split(",")
     .map((t: string) => t.trim())
@@ -73,13 +77,12 @@ export async function updatePost(id: string, formData: FormData) {
     select: { status: true, publishedAt: true },
   });
 
-  // 처음 published 될 때만 publishedAt 설정
+  const isScheduled = status === "scheduled" && scheduledAt;
   const publishedAt =
     status === "published" && existingPost?.status !== "published"
       ? new Date()
       : existingPost?.publishedAt;
 
-  // 기존 태그 삭제 후 새로 연결
   await prisma.postTag.deleteMany({ where: { postId: id } });
 
   await prisma.post.update({
@@ -89,8 +92,9 @@ export async function updatePost(id: string, formData: FormData) {
       slug: slugify(title),
       content,
       excerpt: excerpt || null,
-      status,
+      status: isScheduled ? "scheduled" : status,
       publishedAt,
+      scheduledAt: isScheduled ? new Date(scheduledAt) : null,
       tags: tags?.length
         ? {
             create: tags.map((tagName: string) => ({
@@ -109,6 +113,22 @@ export async function updatePost(id: string, formData: FormData) {
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
   revalidatePath(`/admin/posts/${id}`);
+}
+
+export async function autoSavePost(
+  id: string,
+  data: { title: string; content: string; excerpt: string; tags: string }
+) {
+  await requireAdmin();
+
+  await prisma.post.update({
+    where: { id },
+    data: {
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt || null,
+    },
+  });
 }
 
 export async function deletePost(id: string) {
