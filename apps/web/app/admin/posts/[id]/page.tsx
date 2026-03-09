@@ -31,7 +31,7 @@ export default async function EditPostPage({
           title: post.title,
           content: post.content,
           excerpt: post.excerpt ?? "",
-          tags: post.tags.map((pt) => pt.tag.name).join(", "),
+          tags: post.tags.map((pt: { tag: { name: string } }) => pt.tag.name).join(", "),
           status: post.status,
         }}
       />
