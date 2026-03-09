@@ -16,14 +16,7 @@ export async function createComment(
   const session = await requireAuth();
   await checkRateLimit("comment");
 
-  const trimmed = content.trim();
-  if (!trimmed) {
-    throw new Error("댓글 내용을 입력해주세요.");
-  }
-  if (trimmed.length > VALIDATION.COMMENT_MAX_LENGTH) {
-    throw new Error(`댓글은 ${VALIDATION.COMMENT_MAX_LENGTH}자 이내로 작성해주세요.`);
-  }
-
+  const trimmed = validateCommentContent(content);
   const htmlContent = renderCommentMarkdown(trimmed);
 
   const comment = await prisma.comment.create({
@@ -70,15 +63,47 @@ export async function createComment(
   revalidatePath(`/blog/${comment.post.slug}`);
 }
 
-export async function deleteComment(commentId: string) {
-  const session = await requireAuth();
-
+async function findCommentOrThrow(commentId: string) {
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
     include: { post: { select: { slug: true } } },
   });
-
   if (!comment) throw new Error("댓글을 찾을 수 없습니다.");
+  return comment;
+}
+
+function validateCommentContent(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) throw new Error("댓글 내용을 입력해주세요.");
+  if (trimmed.length > VALIDATION.COMMENT_MAX_LENGTH) {
+    throw new Error(`댓글은 ${VALIDATION.COMMENT_MAX_LENGTH}자 이내로 작성해주세요.`);
+  }
+  return trimmed;
+}
+
+export async function updateComment(commentId: string, content: string) {
+  const session = await requireAuth();
+  await checkRateLimit("comment");
+
+  const comment = await findCommentOrThrow(commentId);
+  if (comment.userId !== session.user.id) {
+    throw new Error("수정 권한이 없습니다.");
+  }
+
+  const trimmed = validateCommentContent(content);
+
+  await prisma.comment.update({
+    where: { id: commentId },
+    data: { content: renderCommentMarkdown(trimmed) },
+  });
+
+  revalidatePath(`/blog/${comment.post.slug}`);
+}
+
+export async function deleteComment(commentId: string) {
+  const session = await requireAuth();
+
+  const comment = await findCommentOrThrow(commentId);
 
   if (comment.userId !== session.user.id && session.user.role !== "admin") {
     throw new Error("삭제 권한이 없습니다.");

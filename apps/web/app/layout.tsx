@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchPalette } from "@/components/blog/search-palette";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { ViewTransitions } from "@/components/ui/view-transitions";
 import { BASE_URL } from "@/lib/config";
 import "katex/dist/katex.min.css";
 import "./globals.css";
@@ -74,6 +75,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <ScrollToTop />
+          <ViewTransitions />
         </ThemeProvider>
       </body>
     </html>

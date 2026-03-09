@@ -14,6 +14,7 @@ import { LikeButton } from "@/components/blog/like-button";
 import { CopyCodeButton } from "@/components/blog/copy-code-button";
 import { RelatedPosts } from "@/components/blog/related-posts";
 import { ShareButtons } from "@/components/blog/share-buttons";
+import { ReadingProgress } from "@/components/ui/reading-progress";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -96,6 +97,7 @@ export default async function PostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ReadingProgress />
       <CopyCodeButton />
     <div className="relative flex gap-12">
       <article className="min-w-0 flex-1">

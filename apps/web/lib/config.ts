@@ -51,3 +51,18 @@ export const VALIDATION = {
 // ─── Post Status ───
 export const POST_STATUSES = ["draft", "published", "scheduled"] as const;
 export type PostStatus = (typeof POST_STATUSES)[number];
+
+// ─── Command Palette ───
+export const NAV_PAGES = [
+  { name: "홈", path: "/", icon: "🏠" },
+  { name: "블로그", path: "/blog", icon: "📝" },
+  { name: "태그", path: "/tags", icon: "🏷️" },
+  { name: "시리즈", path: "/series", icon: "📚" },
+  { name: "소개", path: "/about", icon: "👤" },
+] as const;
+
+export const THEME_OPTIONS = [
+  { value: "light", label: "라이트 모드", icon: "☀️" },
+  { value: "dark", label: "다크 모드", icon: "🌙" },
+  { value: "system", label: "시스템 설정", icon: "💻" },
+] as const;

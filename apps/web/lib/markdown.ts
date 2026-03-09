@@ -8,6 +8,11 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeShiki from "@shikijs/rehype";
 import rehypeKatex from "rehype-katex";
+import {
+  transformerNotationDiff,
+  transformerNotationHighlight,
+  transformerNotationFocus,
+} from "@shikijs/transformers";
 
 const processor = unified()
   .use(remarkParse)
@@ -22,6 +27,11 @@ const processor = unified()
       light: "github-light",
       dark: "github-dark",
     },
+    transformers: [
+      transformerNotationDiff(),
+      transformerNotationHighlight(),
+      transformerNotationFocus(),
+    ],
   })
   .use(rehypeStringify);
 

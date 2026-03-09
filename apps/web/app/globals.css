@@ -17,6 +17,29 @@ html {
   scroll-behavior: smooth;
 }
 
+/* View Transitions */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(main-content) {
+  animation: fade-out 0.15s ease-in;
+}
+
+::view-transition-new(main-content) {
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 body {
   @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
   font-family: var(--font-sans);
@@ -108,4 +131,62 @@ body {
 
 :where(.dark, .dark *) .callout-info {
   background: #1e1b4b;
+}
+
+/* Shiki diff highlighting: // [!code ++] // [!code --] */
+.shiki .diff.add {
+  background-color: #dcfce7;
+}
+
+.shiki .diff.remove {
+  background-color: #fee2e2;
+}
+
+.shiki .diff.add::before {
+  content: "+";
+  color: #16a34a;
+  position: absolute;
+  left: 0.5rem;
+}
+
+.shiki .diff.remove::before {
+  content: "-";
+  color: #dc2626;
+  position: absolute;
+  left: 0.5rem;
+}
+
+:where(.dark, .dark *) .shiki .diff.add {
+  background-color: rgba(22, 163, 74, 0.15);
+}
+
+:where(.dark, .dark *) .shiki .diff.remove {
+  background-color: rgba(220, 38, 38, 0.15);
+}
+
+/* Shiki line highlight: // [!code highlight] */
+.shiki .highlighted {
+  background-color: #dbeafe;
+}
+
+:where(.dark, .dark *) .shiki .highlighted {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Shiki focus: // [!code focus] */
+.shiki .has-focused .line:not(.focused) {
+  opacity: 0.3;
+  transition: opacity 0.3s;
+}
+
+.shiki .has-focused:hover .line:not(.focused) {
+  opacity: 1;
+}
+
+/* Common: make lines position relative for +/- markers */
+.shiki .line {
+  position: relative;
+  padding-left: 1.25rem;
+  display: inline-block;
+  width: 100%;
 }
