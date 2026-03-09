@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchPalette } from "@/components/blog/search-palette";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://devlog.vercel.app";
