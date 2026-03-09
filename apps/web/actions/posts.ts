@@ -121,6 +121,12 @@ export async function deletePost(id: string) {
   redirect("/admin/posts");
 }
 
+const postWithTags = prisma.post.findUnique({
+  where: { id: "" },
+  include: { tags: { include: { tag: true } } },
+});
+export type PostWithTags = NonNullable<Awaited<typeof postWithTags>>;
+
 export async function getPost(id: string) {
   return prisma.post.findUnique({
     where: { id },
@@ -128,7 +134,7 @@ export async function getPost(id: string) {
   });
 }
 
-export async function getPosts() {
+export async function getPosts(): Promise<PostWithTags[]> {
   return prisma.post.findMany({
     orderBy: { createdAt: "desc" },
     include: { tags: { include: { tag: true } } },

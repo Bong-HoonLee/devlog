@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PostCard } from "@/components/blog/post-card";
+import type { PostWithTags } from "@/actions/posts";
 
 export default async function HomePage() {
   const posts = await prisma.post.findMany({
@@ -29,14 +30,14 @@ export default async function HomePage() {
           </p>
         ) : (
           <div className="space-y-6">
-            {posts.map((post) => (
+            {posts.map((post: PostWithTags) => (
               <PostCard
                 key={post.id}
                 title={post.title}
                 slug={post.slug}
                 excerpt={post.excerpt}
                 publishedAt={post.publishedAt}
-                tags={post.tags.map((pt) => ({
+                tags={post.tags.map((pt: { tag: { name: string; slug: string } }) => ({
                   name: pt.tag.name,
                   slug: pt.tag.slug,
                 }))}

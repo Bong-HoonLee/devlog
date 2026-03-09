@@ -30,7 +30,7 @@ export default async function TagsPage() {
         </p>
       ) : (
         <div className="flex flex-wrap gap-3">
-          {filteredTags.map((tag) => (
+          {filteredTags.map((tag: { id: string; name: string; slug: string; _count: { posts: number } }) => (
             <Link
               key={tag.id}
               href={`/tags/${tag.slug}`}

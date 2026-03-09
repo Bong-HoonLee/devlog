@@ -84,7 +84,7 @@ export default async function PostPage({ params }: Props) {
           </div>
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {post.tags.map((pt) => (
+              {post.tags.map((pt: { tag: { name: string; slug: string } }) => (
                 <Link
                   key={pt.tag.slug}
                   href={`/tags/${pt.tag.slug}`}

@@ -44,14 +44,14 @@ export default async function TagPage({ params }: Props) {
       </div>
 
       <div className="space-y-6">
-        {tag.posts.map((pt) => (
+        {tag.posts.map((pt: { post: { id: string; title: string; slug: string; excerpt: string | null; publishedAt: Date | null; tags: { tag: { name: string; slug: string } }[] } }) => (
           <PostCard
             key={pt.post.id}
             title={pt.post.title}
             slug={pt.post.slug}
             excerpt={pt.post.excerpt}
             publishedAt={pt.post.publishedAt}
-            tags={pt.post.tags.map((t) => ({
+            tags={pt.post.tags.map((t: { tag: { name: string; slug: string } }) => ({
               name: t.tag.name,
               slug: t.tag.slug,
             }))}

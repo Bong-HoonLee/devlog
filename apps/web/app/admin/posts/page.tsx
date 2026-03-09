@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getPosts, deletePost } from "@/actions/posts";
+import { getPosts, deletePost, type PostWithTags } from "@/actions/posts";
 import { formatDate } from "@/lib/utils";
 
 export default async function AdminPostsPage() {
@@ -23,7 +23,7 @@ export default async function AdminPostsPage() {
         </p>
       ) : (
         <div className="space-y-2">
-          {posts.map((post) => (
+          {posts.map((post: PostWithTags) => (
             <div
               key={post.id}
               className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-800"
@@ -48,7 +48,7 @@ export default async function AdminPostsPage() {
                   <span>{formatDate(post.createdAt)}</span>
                   {post.tags.length > 0 && (
                     <span>
-                      {post.tags.map((pt) => pt.tag.name).join(", ")}
+                      {post.tags.map((pt: { tag: { name: string } }) => pt.tag.name).join(", ")}
                     </span>
                   )}
                 </div>
