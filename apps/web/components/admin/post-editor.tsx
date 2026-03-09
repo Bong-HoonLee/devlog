@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { TiptapEditor } from "./tiptap-editor";
 
 interface PostEditorProps {
   action: (prevState: string | null, formData: FormData) => Promise<string | null>;
@@ -52,18 +53,8 @@ export function PostEditor({ action, initialData }: PostEditorProps) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="content" className="text-sm font-medium">
-          내용 (마크다운)
-        </label>
-        <textarea
-          id="content"
-          name="content"
-          required
-          rows={20}
-          defaultValue={initialData?.content}
-          placeholder="마크다운으로 글을 작성하세요..."
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 font-mono text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-        />
+        <label className="text-sm font-medium">내용</label>
+        <TiptapEditor initialContent={initialData?.content} />
       </div>
 
       <div className="space-y-2">

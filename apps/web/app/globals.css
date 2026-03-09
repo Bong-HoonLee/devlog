@@ -20,3 +20,33 @@ body {
   @apply bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100;
   font-family: var(--font-sans);
 }
+
+/* Tiptap Editor */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap pre {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+}
+
+.tiptap pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
