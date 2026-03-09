@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
 const adminNav = [
   { href: "/admin", label: "대시보드" },
@@ -6,11 +8,21 @@ const adminNav = [
   { href: "/admin/posts/new", label: "새 글 작성" },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
+  if (!session) {
+    redirect("/auth/signin");
+  }
+
+  if (session.user.role !== "admin") {
+    redirect("/");
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
