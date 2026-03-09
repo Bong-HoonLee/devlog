@@ -18,7 +18,7 @@ export default async function TagsPage() {
     orderBy: { name: "asc" },
   });
 
-  const filteredTags = tags.filter((tag) => tag._count.posts > 0);
+  const filteredTags = tags.filter((tag: { id: string; name: string; slug: string; _count: { posts: number } }) => tag._count.posts > 0);
 
   return (
     <div className="space-y-8">

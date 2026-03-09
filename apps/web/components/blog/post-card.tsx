@@ -40,7 +40,7 @@ export function PostCard({
       )}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
+          {tags.map((tag: { name: string; slug: string }) => (
             <Link
               key={tag.slug}
               href={`/tags/${tag.slug}`}

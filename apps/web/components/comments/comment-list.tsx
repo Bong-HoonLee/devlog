@@ -29,7 +29,7 @@ export async function CommentList({ postId }: CommentListProps) {
 
       {comments.length > 0 && (
         <div className="space-y-6">
-          {comments.map((comment) => (
+          {comments.map((comment: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null }; replies: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null } }[] }) => (
             <CommentItem
               key={comment.id}
               comment={comment}

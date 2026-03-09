@@ -36,7 +36,7 @@ export function Toc({ headings }: TocProps) {
       <div className="sticky top-24 space-y-2">
         <p className="text-sm font-semibold">목차</p>
         <ul className="space-y-1 text-sm">
-          {headings.map((heading) => (
+          {headings.map((heading: { id: string; text: string; level: number }) => (
             <li
               key={heading.id}
               style={{ paddingLeft: `${(heading.level - 1) * 12}px` }}

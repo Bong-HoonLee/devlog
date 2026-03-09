@@ -16,7 +16,7 @@ export default function AdminLayout({
       <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
         <h1 className="text-2xl font-bold">Admin</h1>
         <nav className="flex gap-4">
-          {adminNav.map((item) => (
+          {adminNav.map((item: { href: string; label: string }) => (
             <Link
               key={item.href}
               href={item.href}

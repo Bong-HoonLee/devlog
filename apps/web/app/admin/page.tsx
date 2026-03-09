@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">대시보드</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {stats.map((stat) => (
+        {stats.map((stat: { label: string; value: number }) => (
           <div
             key={stat.label}
             className="rounded-lg border border-gray-200 p-4 dark:border-gray-800"

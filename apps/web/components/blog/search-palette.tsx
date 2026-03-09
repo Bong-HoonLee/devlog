@@ -75,7 +75,7 @@ export function SearchPalette() {
             <Command.Empty className="px-4 py-8 text-center text-sm text-gray-500">
               검색 결과가 없습니다.
             </Command.Empty>
-            {results.map((post) => (
+            {results.map((post: SearchResult) => (
               <Command.Item
                 key={post.slug}
                 value={post.title}

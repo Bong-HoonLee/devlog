@@ -15,7 +15,7 @@ export function Header() {
           Dev Blog
         </Link>
         <nav className="flex items-center gap-6">
-          {navItems.map((item) => (
+          {navItems.map((item: { href: string; label: string }) => (
             <Link
               key={item.href}
               href={item.href}

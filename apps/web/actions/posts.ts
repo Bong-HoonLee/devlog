@@ -23,7 +23,7 @@ export async function createPost(formData: FormData) {
   const status = formData.get("status") as string;
   const tags = (formData.get("tags") as string)
     ?.split(",")
-    .map((t) => t.trim())
+    .map((t: string) => t.trim())
     .filter(Boolean);
 
   const slug = slugify(title);
@@ -38,7 +38,7 @@ export async function createPost(formData: FormData) {
       publishedAt: status === "published" ? new Date() : null,
       tags: tags?.length
         ? {
-            create: tags.map((tagName) => ({
+            create: tags.map((tagName: string) => ({
               tag: {
                 connectOrCreate: {
                   where: { slug: slugify(tagName) },
@@ -65,7 +65,7 @@ export async function updatePost(id: string, formData: FormData) {
   const status = formData.get("status") as string;
   const tags = (formData.get("tags") as string)
     ?.split(",")
-    .map((t) => t.trim())
+    .map((t: string) => t.trim())
     .filter(Boolean);
 
   const existingPost = await prisma.post.findUnique({
@@ -93,7 +93,7 @@ export async function updatePost(id: string, formData: FormData) {
       publishedAt,
       tags: tags?.length
         ? {
-            create: tags.map((tagName) => ({
+            create: tags.map((tagName: string) => ({
               tag: {
                 connectOrCreate: {
                   where: { slug: slugify(tagName) },

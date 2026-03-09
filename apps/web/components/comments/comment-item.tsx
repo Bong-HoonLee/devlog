@@ -100,7 +100,7 @@ export function CommentItem({
 
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-4 space-y-4">
-          {comment.replies.map((reply) => (
+          {comment.replies.map((reply: CommentData) => (
             <CommentItem
               key={reply.id}
               comment={reply}
