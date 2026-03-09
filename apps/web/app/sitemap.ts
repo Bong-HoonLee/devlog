@@ -14,14 +14,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true },
   });
 
-  const postEntries = posts.map((post) => ({
+  const postEntries = posts.map((post: { slug: string; updatedAt: Date }) => ({
     url: `${BASE_URL}/blog/${post.slug}`,
     lastModified: post.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
 
-  const tagEntries = tags.map((tag) => ({
+  const tagEntries = tags.map((tag: { slug: string }) => ({
     url: `${BASE_URL}/tags/${tag.slug}`,
     changeFrequency: "weekly" as const,
     priority: 0.5,

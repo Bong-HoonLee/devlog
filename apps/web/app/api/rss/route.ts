@@ -17,7 +17,7 @@ export async function GET() {
 
   const items = posts
     .map(
-      (post) => `
+      (post: { title: string; slug: string; excerpt: string | null; publishedAt: Date | null }) => `
     <item>
       <title><![CDATA[${post.title}]]></title>
       <link>${BASE_URL}/blog/${post.slug}</link>
