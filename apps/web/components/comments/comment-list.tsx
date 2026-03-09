@@ -5,9 +5,10 @@ import { CommentItem } from "./comment-item";
 
 interface CommentListProps {
   postId: string;
+  postSlug: string;
 }
 
-export async function CommentList({ postId }: CommentListProps) {
+export async function CommentList({ postId, postSlug }: CommentListProps) {
   const [session, comments] = await Promise.all([
     auth(),
     getComments(postId),
@@ -29,11 +30,12 @@ export async function CommentList({ postId }: CommentListProps) {
 
       {comments.length > 0 && (
         <div className="space-y-6">
-          {comments.map((comment: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null }; replies: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null } }[] }) => (
+          {comments.map((comment: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null }; reactions: { emoji: string; userId: string }[]; replies: { id: string; content: string; createdAt: Date; user: { id: string; name: string; image: string | null }; reactions: { emoji: string; userId: string }[] }[] }) => (
             <CommentItem
               key={comment.id}
               comment={comment}
               postId={postId}
+              postSlug={postSlug}
               currentUserId={session?.user.id}
               currentUserRole={session?.user.role}
             />

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PostEditor } from "@/components/admin/post-editor";
 import { getPost, updatePost } from "@/actions/posts";
+import { getAllSeries } from "@/actions/series";
 
 export default async function EditPostPage({
   params,
@@ -8,7 +9,7 @@ export default async function EditPostPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const post = await getPost(id);
+  const [post, seriesList] = await Promise.all([getPost(id), getAllSeries()]);
 
   if (!post) notFound();
 
@@ -28,6 +29,7 @@ export default async function EditPostPage({
       <PostEditor
         action={action}
         postId={id}
+        seriesList={seriesList.map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }))}
         initialData={{
           title: post.title,
           content: post.content,
@@ -35,6 +37,7 @@ export default async function EditPostPage({
           tags: post.tags.map((pt: { tag: { name: string } }) => pt.tag.name).join(", "),
           status: post.status,
           scheduledAt: post.scheduledAt?.toISOString().slice(0, 16),
+          seriesId: post.seriesId ?? undefined,
         }}
       />
     </div>

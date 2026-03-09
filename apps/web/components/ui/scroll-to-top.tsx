@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SCROLL_THRESHOLD_PX } from "@/lib/config";
 
 export function ScrollToTop() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     function handleScroll() {
-      setVisible(window.scrollY > 400);
+      setVisible(window.scrollY > SCROLL_THRESHOLD_PX);
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);

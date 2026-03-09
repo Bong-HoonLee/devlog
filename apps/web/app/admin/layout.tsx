@@ -6,6 +6,7 @@ const adminNav = [
   { href: "/admin", label: "대시보드" },
   { href: "/admin/posts", label: "글 관리" },
   { href: "/admin/posts/new", label: "새 글 작성" },
+  { href: "/admin/series", label: "시리즈" },
 ];
 
 export default async function AdminLayout({

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { PostCard } from "@/components/blog/post-card";
+import { mapPostTags } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ tag: string }>;
@@ -51,10 +52,7 @@ export default async function TagPage({ params }: Props) {
             slug={pt.post.slug}
             excerpt={pt.post.excerpt}
             publishedAt={pt.post.publishedAt}
-            tags={pt.post.tags.map((t: { tag: { name: string; slug: string } }) => ({
-              name: t.tag.name,
-              slug: t.tag.slug,
-            }))}
+            tags={mapPostTags(pt.post.tags)}
           />
         ))}
       </div>

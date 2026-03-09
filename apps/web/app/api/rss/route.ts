@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://devlog.vercel.app";
+import { BASE_URL } from "@/lib/config";
 
 export async function GET() {
   const posts = await prisma.post.findMany({

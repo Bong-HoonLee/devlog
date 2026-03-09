@@ -1,6 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import type { Editor } from "@tiptap/react";
+import { uploadImage } from "@/actions/upload";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -41,7 +43,27 @@ function Divider() {
 }
 
 export function TiptapToolbar({ editor }: ToolbarProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   if (!editor) return null;
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editor) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const url = await uploadImage(formData);
+      editor.chain().focus().setImage({ src: url }).run();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "업로드 실패");
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 px-2 py-1.5 dark:border-gray-700">
@@ -153,16 +175,18 @@ export function TiptapToolbar({ editor }: ToolbarProps) {
         🔗
       </ToolbarButton>
       <ToolbarButton
-        onClick={() => {
-          const url = window.prompt("이미지 URL을 입력하세요:");
-          if (url) {
-            editor.chain().focus().setImage({ src: url }).run();
-          }
-        }}
-        title="이미지"
+        onClick={() => fileInputRef.current?.click()}
+        title="이미지 업로드"
       >
         🖼
       </ToolbarButton>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
     </div>
   );
 }

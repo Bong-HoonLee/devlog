@@ -3,6 +3,12 @@
 import { useActionState, useState, useRef, useCallback, useEffect } from "react";
 import { TiptapEditor } from "./tiptap-editor";
 import { autoSavePost } from "@/actions/posts";
+import { AUTO_SAVE_DEBOUNCE_MS } from "@/lib/config";
+
+interface SeriesOption {
+  id: string;
+  title: string;
+}
 
 interface PostEditorProps {
   action: (prevState: string | null, formData: FormData) => Promise<string | null>;
@@ -13,11 +19,13 @@ interface PostEditorProps {
     tags: string;
     status: string;
     scheduledAt?: string;
+    seriesId?: string;
   };
   postId?: string;
+  seriesList?: SeriesOption[];
 }
 
-export function PostEditor({ action, initialData, postId }: PostEditorProps) {
+export function PostEditor({ action, initialData, postId, seriesList = [] }: PostEditorProps) {
   const [error, formAction, isPending] = useActionState(action, null);
   const [status, setStatus] = useState(initialData?.status ?? "draft");
   const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
@@ -43,7 +51,7 @@ export function PostEditor({ action, initialData, postId }: PostEditorProps) {
       } catch {
         setAutoSaveStatus("자동 저장 실패");
       }
-    }, 5000);
+    }, AUTO_SAVE_DEBOUNCE_MS);
   }, [postId]);
 
   useEffect(() => {
@@ -109,6 +117,25 @@ export function PostEditor({ action, initialData, postId }: PostEditorProps) {
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
         />
       </div>
+
+      {seriesList.length > 0 && (
+        <div className="space-y-2">
+          <label htmlFor="seriesId" className="text-sm font-medium">
+            시리즈 (선택)
+          </label>
+          <select
+            id="seriesId"
+            name="seriesId"
+            defaultValue={initialData?.seriesId ?? ""}
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          >
+            <option value="">시리즈 없음</option>
+            {seriesList.map((s: SeriesOption) => (
+              <option key={s.id} value={s.id}>{s.title}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-4">
         <select

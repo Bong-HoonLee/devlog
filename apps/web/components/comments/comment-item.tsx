@@ -5,6 +5,7 @@ import Image from "next/image";
 import { formatDate } from "@/lib/utils";
 import { deleteComment } from "@/actions/comments";
 import { CommentForm } from "./comment-form";
+import { Reactions } from "./reactions";
 
 interface CommentUser {
   id: string;
@@ -12,17 +13,24 @@ interface CommentUser {
   image: string | null;
 }
 
+interface ReactionData {
+  emoji: string;
+  userId: string;
+}
+
 interface CommentData {
   id: string;
   content: string;
   createdAt: Date;
   user: CommentUser;
+  reactions?: ReactionData[];
   replies?: CommentData[];
 }
 
 interface CommentItemProps {
   comment: CommentData;
   postId: string;
+  postSlug: string;
   currentUserId?: string;
   currentUserRole?: string;
   isReply?: boolean;
@@ -31,6 +39,7 @@ interface CommentItemProps {
 export function CommentItem({
   comment,
   postId,
+  postSlug,
   currentUserId,
   currentUserRole,
   isReply = false,
@@ -58,9 +67,19 @@ export function CommentItem({
           </span>
         </div>
 
-        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-          {comment.content}
-        </p>
+        <div
+          className="prose prose-sm max-w-none text-gray-700 dark:prose-invert dark:text-gray-300"
+          dangerouslySetInnerHTML={{ __html: comment.content }}
+        />
+
+        {comment.reactions && (
+          <Reactions
+            commentId={comment.id}
+            postSlug={postSlug}
+            reactions={comment.reactions}
+            currentUserId={currentUserId}
+          />
+        )}
 
         <div className="flex items-center gap-3">
           {!isReply && (
@@ -105,6 +124,7 @@ export function CommentItem({
               key={reply.id}
               comment={reply}
               postId={postId}
+              postSlug={postSlug}
               currentUserId={currentUserId}
               currentUserRole={currentUserRole}
               isReply

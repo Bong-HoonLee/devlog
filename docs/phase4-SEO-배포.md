@@ -485,6 +485,177 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
 
 ---
 
+## 10. 실제 배포에서 만난 문제들과 해결
+
+배포 가이드대로 하면 끝날 것 같지만, 실제로는 여러 문제를 만났다. 로컬에서는 잘 되는데 Vercel에서만 실패하는 케이스들이다.
+
+### 10-1. Turborepo 환경변수 미전달
+
+**증상:** Vercel 빌드 시 환경변수를 읽지 못함.
+
+**원인:** Turborepo는 기본적으로 빌드 태스크에 환경변수를 전달하지 않는다. 명시적으로 선언해야 한다.
+
+**해결:** `turbo.json`의 `build` 태스크에 `env` 배열 추가.
+
+```json
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "DATABASE_URL", "DIRECT_URL",
+        "NEXTAUTH_SECRET", "NEXTAUTH_URL",
+        "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET",
+        "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+        "NEXT_PUBLIC_SITE_URL"
+      ]
+    }
+  }
+}
+```
+
+**교훈:** Turborepo 모노레포에서는 환경변수를 turbo.json에 선언하지 않으면 빌드 캐시에도 영향을 준다. 환경변수가 바뀌어도 캐시가 무효화되지 않는 문제가 생길 수 있다.
+
+### 10-2. Prisma Client 미생성
+
+**증상:** `@prisma/client did not initialize yet. Please run "prisma generate"`
+
+**원인:** 모노레포 구조에서 Prisma schema가 `apps/web/prisma/schema.prisma`에 있는데, Prisma의 postinstall 스크립트가 이 경로를 자동으로 찾지 못한다.
+
+**해결:** `apps/web/package.json`의 build 스크립트에 `prisma generate`를 추가.
+
+```json
+{
+  "scripts": {
+    "build": "prisma generate && next build"
+  }
+}
+```
+
+**교훈:** 모노레포에서 Prisma를 사용하면 schema 경로가 기본 위치(`prisma/schema.prisma`)가 아닐 수 있다. 빌드 전에 반드시 `prisma generate`를 실행해야 한다.
+
+### 10-3. TypeScript implicit any 타입 에러
+
+**증상:** 로컬 빌드는 성공하는데 Vercel에서 `Parameter 'xxx' implicitly has an 'any' type` 에러 발생.
+
+**원인:** 로컬에서는 `prisma generate`로 생성된 타입이 캐시되어 있어서 `.map()` 콜백의 파라미터 타입이 자동 추론된다. 하지만 Vercel의 clean build 환경에서는 타입 체크 시점에 Prisma 타입이 아직 준비되지 않을 수 있다.
+
+**해결:** Prisma 쿼리 결과에 대한 `.map()`, `.filter()` 콜백에 명시적 타입 어노테이션 추가.
+
+```tsx
+// Before (로컬에서만 동작)
+posts.map((post) => ({ ... }))
+
+// After (Vercel에서도 동작)
+posts.map((post: { slug: string; updatedAt: Date }) => ({ ... }))
+```
+
+**영향 받은 파일들:**
+- `app/api/rss/route.ts` — RSS 피드의 post 매핑
+- `app/sitemap.ts` — sitemap의 post, tag 매핑
+- `app/tags/page.tsx` — 태그 필터링
+- `app/page.tsx`, `app/blog/page.tsx` — 포스트 목록
+- `app/blog/[slug]/page.tsx` — 태그 표시
+- `app/tags/[tag]/page.tsx` — 태그별 포스트
+- `components/comments/comment-list.tsx` — 댓글 목록
+- 기타 모든 `.map()` 콜백
+
+**교훈:** TypeScript strict mode에서 Prisma를 사용할 때, 특히 모노레포 + CI 환경에서는 타입 추론에 의존하지 말고 명시적으로 타입을 지정하는 것이 안전하다.
+
+### 10-4. Edge Function 크기 제한 초과
+
+**증상:** `The Edge Function "middleware" size is 1.01 MB and your plan size limit is 1 MB`
+
+**원인:** middleware에서 NextAuth의 `auth()` 함수를 import하면, NextAuth + Prisma + jose 등 전체 번들이 Edge Function에 포함된다. Vercel Hobby 플랜의 Edge Function 크기 제한은 1MB.
+
+**처음 시도한 해결:** middleware에서 `auth()` 대신 `getToken()`(next-auth/jwt)으로 교체. 140KB → 45.7KB로 감소.
+
+```ts
+// middleware.ts (경량화 버전)
+import { getToken } from "next-auth/jwt";
+
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) return NextResponse.redirect(new URL("/auth/signin", req.url));
+  if (token.role !== "admin") return NextResponse.redirect(new URL("/", req.url));
+  return NextResponse.next();
+}
+```
+
+### 10-5. Edge Runtime에서 JWT 토큰 검증 실패
+
+**증상:** middleware에서 `getToken()`이 토큰을 제대로 읽지 못해, 로그인 후에도 `/admin` 접근 시 로그인 페이지로 리다이렉트됨.
+
+**원인:** NextAuth v5(beta)의 `getToken()`이 Edge Runtime에서 JWT 쿠키를 안정적으로 파싱하지 못하는 문제.
+
+**최종 해결:** middleware를 완전히 제거하고, admin layout(Server Component)에서 `auth()`로 인증 체크.
+
+```tsx
+// app/admin/layout.tsx
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+
+export default async function AdminLayout({ children }) {
+  const session = await auth();
+  if (!session) redirect("/auth/signin");
+  if (session.user.role !== "admin") redirect("/");
+  return <div>{children}</div>;
+}
+```
+
+**교훈:** Edge Runtime은 제약이 많다. 인증 체크처럼 DB 접근이 필요한 로직은 Server Component(Node.js Runtime)에서 처리하는 것이 더 안정적이다. middleware는 단순한 리다이렉트나 헤더 조작 정도에만 사용하는 것이 좋다.
+
+### 10-6. NextAuth v5 환경변수 네이밍
+
+**증상:** GitHub/Google 로그인 클릭 시 500 에러 또는 404 에러.
+
+**원인:** NextAuth v5는 Provider를 옵션 없이 사용하면(`[GitHub, Google]`) 환경변수를 `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` 형식으로 찾는다. 하지만 우리는 `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`으로 설정했다.
+
+**해결:** Provider에 환경변수를 명시적으로 전달.
+
+```ts
+// lib/auth.ts
+providers: [
+  GitHub({
+    clientId: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+  }),
+  Google({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  }),
+],
+```
+
+**교훈:** NextAuth v5(beta)는 아직 안정 버전이 아니라 문서와 실제 동작이 다를 수 있다. 환경변수 자동 감지에 의존하지 말고 명시적으로 전달하는 것이 안전하다.
+
+### 10-7. Google OAuth "앱 게시" 필요
+
+**증상:** Google 로그인 시 `The OAuth client was not found` (401 에러).
+
+**원인:** Google Cloud Console에서 OAuth 동의 화면의 게시 상태가 "테스트"로 되어 있으면, 테스트 사용자로 등록된 계정만 로그인 가능. 프로덕션 배포 시에는 "앱 게시"가 필요.
+
+**해결:** Google Cloud Console → OAuth 동의 화면 → Audience → **Publish App** 클릭.
+
+**교훈:** Google OAuth는 개발/테스트 단계에서는 테스트 모드로 충분하지만, 실제 배포 시 반드시 앱을 게시해야 한다.
+
+---
+
+## 배포 트러블슈팅 요약
+
+| 문제 | 원인 | 해결 |
+|------|------|------|
+| 환경변수 미전달 | Turborepo 기본 설정 | turbo.json에 env 배열 추가 |
+| Prisma Client 미생성 | 모노레포 경로 문제 | build 스크립트에 prisma generate 추가 |
+| implicit any 타입 에러 | Vercel clean build 환경 | .map() 콜백에 명시적 타입 |
+| Edge Function 크기 초과 | NextAuth 번들 크기 | middleware 제거, layout에서 인증 |
+| JWT 토큰 검증 실패 | Edge Runtime 제약 | Server Component에서 auth() 사용 |
+| OAuth 500/404 에러 | NextAuth v5 env 네이밍 | Provider에 명시적 전달 |
+| Google OAuth 401 | 앱 미게시 | Publish App 클릭 |
+
+---
+
 ## Phase 4 완료 요약
 
 | 항목 | 상태 |

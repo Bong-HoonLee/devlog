@@ -1,7 +1,10 @@
 import { PostEditor } from "@/components/admin/post-editor";
 import { createPost } from "@/actions/posts";
+import { getAllSeries } from "@/actions/series";
 
-export default function NewPostPage() {
+export default async function NewPostPage() {
+  const seriesList = await getAllSeries();
+
   async function action(_prevState: string | null, formData: FormData): Promise<string | null> {
     "use server";
     try {
@@ -15,7 +18,10 @@ export default function NewPostPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">새 글 작성</h2>
-      <PostEditor action={action} />
+      <PostEditor
+        action={action}
+        seriesList={seriesList.map((s: { id: string; title: string }) => ({ id: s.id, title: s.title }))}
+      />
     </div>
   );
 }

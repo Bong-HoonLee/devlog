@@ -5,7 +5,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: "avatars.githubusercontent.com" },
       { hostname: "lh3.googleusercontent.com" },
+      { hostname: "cayypopuhcgvjbjjekkc.supabase.co" },
     ],
+    formats: ["image/avif", "image/webp"],
+  },
+  experimental: {
+    optimizePackageImports: ["framer-motion", "shiki", "@tiptap/react"],
   },
 };
 

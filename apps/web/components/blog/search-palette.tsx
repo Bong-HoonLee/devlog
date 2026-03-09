@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { searchPosts } from "@/actions/search";
+import { SEARCH_DEBOUNCE_MS } from "@/lib/config";
 
 interface SearchResult {
   title: string;
@@ -45,7 +46,7 @@ export function SearchPalette() {
         const data = await searchPosts(value);
         setResults(data);
       });
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
   }, []);
 
   if (!open) return null;

@@ -10,6 +10,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { common, createLowlight } from "lowlight";
 import { TiptapToolbar } from "./tiptap-toolbar";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/editor-markdown";
+import { uploadImage } from "@/actions/upload";
 
 const lowlight = createLowlight(common);
 
@@ -63,6 +64,64 @@ export function TiptapEditor({
       attributes: {
         class:
           "prose prose-gray dark:prose-invert max-w-none min-h-[400px] px-4 py-3 focus:outline-none",
+      },
+      handleDrop(view, event) {
+        const files = event.dataTransfer?.files;
+        if (!files?.length) return false;
+
+        const file = files[0];
+        if (!file.type.startsWith("image/")) return false;
+
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        uploadImage(formData)
+          .then((url) => {
+            const { schema } = view.state;
+            const node = schema.nodes.image.create({ src: url });
+            const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (pos) {
+              const tr = view.state.tr.insert(pos.pos, node);
+              view.dispatch(tr);
+            }
+          })
+          .catch((err) => {
+            alert(err instanceof Error ? err.message : "업로드 실패");
+          });
+
+        return true;
+      },
+      handlePaste(view, event) {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (const item of Array.from(items)) {
+          if (!item.type.startsWith("image/")) continue;
+
+          event.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          uploadImage(formData)
+            .then((url) => {
+              const { schema } = view.state;
+              const node = schema.nodes.image.create({ src: url });
+              const tr = view.state.tr.replaceSelectionWith(node);
+              view.dispatch(tr);
+            })
+            .catch((err) => {
+              alert(err instanceof Error ? err.message : "업로드 실패");
+            });
+
+          return true;
+        }
+
+        return false;
       },
     },
   });

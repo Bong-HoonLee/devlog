@@ -114,3 +114,11 @@ model Like {
 
   @@unique([postId, userId])
 }
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  verified  Boolean  @default(false)
+  token     String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+}

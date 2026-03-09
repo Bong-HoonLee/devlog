@@ -2,9 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, signOut } from "@/lib/auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/components/ui/notification-bell";
 
 const navItems = [
   { href: "/blog", label: "Blog" },
+  { href: "/series", label: "Series" },
   { href: "/tags", label: "Tags" },
   { href: "/about", label: "About" },
 ];
@@ -42,6 +44,7 @@ export async function Header() {
 
           {session ? (
             <div className="flex items-center gap-3">
+              <NotificationBell />
               {session.user.image && (
                 <Image
                   src={session.user.image}
