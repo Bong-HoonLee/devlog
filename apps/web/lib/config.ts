@@ -1,8 +1,10 @@
 // ─── Site ───
 // 배포 환경에서는 NEXT_PUBLIC_SITE_URL 을 반드시 설정해야 합니다.
 // 누락 시 OG 이미지 / sitemap / RSS / canonical 링크가 localhost 를 가리킵니다.
+// ?? 가 아니라 || 인 이유: CI 등에서 미설정 변수가 빈 문자열로 주입되면
+// ?? 는 이를 통과시켜 new URL("") 이 터집니다.
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 // ─── Pagination ───
 export const POSTS_PER_PAGE = 10;
