@@ -26,7 +26,7 @@
 
 ### Infra & DevOps
 - **Vercel** (호스팅, 무료 Hobby 플랜)
-- **Cloudflare R2** (이미지 저장소, Egress 0원)
+- **Supabase Storage** (이미지 저장소, 버킷명 `images`)
 - **GitHub Actions** (CI/CD)
 - **Turborepo** (모노레포 빌드)
 - **pnpm** (패키지 매니저)
@@ -173,7 +173,7 @@ my-blog/
 │       │   ├── reactions.ts        # 이모지 리액션 토글
 │       │   ├── notifications.ts    # 이메일 알림 (Resend)
 │       │   ├── likes.ts            # 좋아요 토글
-│       │   └── upload.ts           # 이미지 업로드 (R2)
+│       │   └── upload.ts           # 이미지 업로드 (Supabase Storage)
 │       ├── lib/
 │       │   ├── prisma.ts           # Prisma 클라이언트 싱글턴
 │       │   ├── supabase.ts         # Supabase 클라이언트
@@ -227,7 +227,7 @@ my-blog/
 - 어드민 레이아웃 + 인증 미들웨어
 - 마크다운 에디터 (Milkdown/Tiptap)
 - 글 CRUD Server Actions
-- 이미지 업로드 → Cloudflare R2
+- 이미지 업로드 → Supabase Storage
 - 임시 저장 / 예약 발행
 
 ### Phase 3: 공개 블로그 UI & 댓글 (1~2주)

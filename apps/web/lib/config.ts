@@ -1,6 +1,8 @@
 // ─── Site ───
+// 배포 환경에서는 NEXT_PUBLIC_SITE_URL 을 반드시 설정해야 합니다.
+// 누락 시 OG 이미지 / sitemap / RSS / canonical 링크가 localhost 를 가리킵니다.
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://devlog.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 // ─── Pagination ───
 export const POSTS_PER_PAGE = 10;

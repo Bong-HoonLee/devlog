@@ -1,31 +1,53 @@
+import { cache, Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { renderMarkdown, extractHeadings } from "@/lib/markdown";
-import { formatDate, readingTime, mapPostTags } from "@/lib/utils";
+import { extractHeadings } from "@/lib/markdown";
+import { formatDate, readingTime } from "@/lib/utils";
 import { BASE_URL } from "@/lib/config";
-import { incrementViewCount } from "@/lib/view-count";
 import { Toc } from "@/components/blog/toc";
 import { CommentList } from "@/components/comments/comment-list";
 import { SeriesNav } from "@/components/blog/series-nav";
-import { LikeButton } from "@/components/blog/like-button";
+import { ArticleBody } from "@/components/blog/article-body";
+import { PostLikeButton } from "@/components/blog/post-like-button";
+import { ViewCount } from "@/components/blog/view-count";
 import { CopyCodeButton } from "@/components/blog/copy-code-button";
 import { RelatedPosts } from "@/components/blog/related-posts";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { ReadingProgress } from "@/components/ui/reading-progress";
+import {
+  ArticleBodySkeleton,
+  CommentsSkeleton,
+  LikeButtonSkeleton,
+} from "@/components/ui/skeleton";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
+// Deduped across generateMetadata and the page render within a single request.
+const getPost = cache(async (slug: string) =>
+  prisma.post.findUnique({
+    where: { slug, status: "published" },
+    include: {
+      tags: { include: { tag: true } },
+      series: {
+        include: {
+          posts: {
+            where: { status: "published" },
+            orderBy: { publishedAt: "asc" },
+            select: { id: true, title: true, slug: true },
+          },
+        },
+      },
+    },
+  })
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.post.findUnique({
-    where: { slug, status: "published" },
-    select: { title: true, excerpt: true },
-  });
+  const post = await getPost(slug);
 
   if (!post) return {};
 
@@ -46,37 +68,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
 
-  const post = await prisma.post.findUnique({
-    where: { slug, status: "published" },
-    include: {
-      tags: { include: { tag: true } },
-      series: {
-        include: {
-          posts: {
-            where: { status: "published" },
-            orderBy: { publishedAt: "asc" },
-            select: { id: true, title: true, slug: true },
-          },
-        },
-      },
-    },
-  });
+  // Awaited before anything streams, so notFound() can still set a 404 status.
+  const post = await getPost(slug);
 
   if (!post) notFound();
 
-  const session = await auth();
-  const [html, headings, likeCount, userLike, viewCount] = await Promise.all([
-    renderMarkdown(post.content),
-    Promise.resolve(extractHeadings(post.content)),
-    prisma.like.count({ where: { postId: post.id } }),
-    session
-      ? prisma.like.findUnique({
-          where: { postId_userId: { postId: post.id, userId: session.user.id } },
-        })
-      : null,
-    incrementViewCount(slug),
-  ]);
-
+  const headings = extractHeadings(post.content);
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
   const tagIds = post.tags.map((pt: { tagId: string }) => pt.tagId);
 
@@ -110,7 +107,9 @@ export default async function PostPage({ params }: Props) {
               <time>{formatDate(post.publishedAt)}</time>
             )}
             <span>{readingTime(post.content)} 읽기</span>
-            <span>{viewCount} views</span>
+            <Suspense fallback={<span>&nbsp;</span>}>
+              <ViewCount slug={slug} />
+            </Suspense>
           </div>
           <div className="flex items-center justify-between">
             {post.tags.length > 0 && (
@@ -141,27 +140,29 @@ export default async function PostPage({ params }: Props) {
           </div>
         )}
 
-        <div
-          className="prose prose-gray mt-8 max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-pre:bg-transparent prose-pre:p-0"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className="mt-8">
+          <Suspense fallback={<ArticleBodySkeleton />}>
+            <ArticleBody content={post.content} />
+          </Suspense>
+        </div>
 
         <div className="my-10 flex justify-center">
-          <LikeButton
-            postId={post.id}
-            postSlug={post.slug}
-            likeCount={likeCount}
-            isLiked={!!userLike}
-          />
+          <Suspense fallback={<LikeButtonSkeleton />}>
+            <PostLikeButton postId={post.id} postSlug={post.slug} />
+          </Suspense>
         </div>
 
         <hr className="my-12 border-gray-200 dark:border-gray-800" />
 
-        <RelatedPosts postId={post.id} tagIds={tagIds} />
+        <Suspense fallback={null}>
+          <RelatedPosts postId={post.id} tagIds={tagIds} />
+        </Suspense>
 
         <hr className="my-12 border-gray-200 dark:border-gray-800" />
 
-        <CommentList postId={post.id} postSlug={post.slug} />
+        <Suspense fallback={<CommentsSkeleton />}>
+          <CommentList postId={post.id} postSlug={post.slug} />
+        </Suspense>
       </article>
 
       <Toc headings={headings} />
