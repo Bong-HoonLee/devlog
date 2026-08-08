@@ -72,6 +72,7 @@ export async function createPost(formData: FormData) {
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath("/sitemap.xml");
   redirect(`/admin/posts/${post.id}`);
 }
 
@@ -111,6 +112,7 @@ export async function updatePost(id: string, formData: FormData) {
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath("/sitemap.xml");
   revalidatePath(`/admin/posts/${id}`);
 }
 
@@ -137,6 +139,7 @@ export async function deletePost(id: string) {
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath("/sitemap.xml");
   redirect("/admin/posts");
 }
 
