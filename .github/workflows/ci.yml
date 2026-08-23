@@ -6,8 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# 빌드 검증은 Vercel 이 푸시/PR 마다 실제 환경변수로 수행하므로 여기서는 하지 않습니다.
+# next build 는 generateStaticParams / sitemap / RSS 때문에 DB 연결이 필요한데,
+# 그러자고 프로덕션 자격증명을 GitHub Secrets 에 두는 것은 얻는 것에 비해 위험합니다.
 jobs:
-  lint-and-build:
+  lint-and-typecheck:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,20 +37,3 @@ jobs:
 
       - name: Type check
         run: pnpm --filter web exec tsc --noEmit
-
-      - name: Build
-        run: pnpm build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-          GITHUB_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
-          GITHUB_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          # 배포가 아닌 빌드 검증용이므로 시크릿이 없으면 placeholder 를 씁니다.
-          # (lib/config.ts 는 프로덕션 빌드에서 이 값이 비면 빌드를 중단합니다)
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://example.com' }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
