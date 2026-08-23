@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cacheLife } from "next/cache";
 import { unified, type Plugin } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
@@ -147,14 +147,25 @@ export interface RenderedMarkdown {
   headings: Heading[];
 }
 
-// 본문과 목차가 서로 다른 Suspense 경계에서 렌더되므로 cache 로 한 번만 처리합니다.
-export const renderMarkdown = cache(
-  async (content: string): Promise<RenderedMarkdown> => {
-    const result = await processor.process(content);
+/**
+ * 본문과 목차가 서로 다른 Suspense 경계에서 렌더되므로 한 번만 처리해 공유합니다.
+ *
+ * React cache 대신 "use cache" 를 쓰는 이유:
+ *  - 같은 원문이면 결과가 항상 같으므로 요청 간에도 재사용할 수 있습니다
+ *    (Shiki 하이라이팅은 비싼 편이라 요청마다 다시 돌릴 이유가 없습니다)
+ *  - Shiki 내부가 프리렌더에서 금지된 Date.now() 를 호출하는데,
+ *    캐시 스코프 안에서는 결과에 수명이 붙으므로 허용됩니다
+ */
+export async function renderMarkdown(
+  content: string
+): Promise<RenderedMarkdown> {
+  "use cache";
+  cacheLife("max");
 
-    return {
-      html: result.toString(),
-      headings: (result.data.headings as Heading[] | undefined) ?? [],
-    };
-  }
-);
+  const result = await processor.process(content);
+
+  return {
+    html: result.toString(),
+    headings: (result.data.headings as Heading[] | undefined) ?? [],
+  };
+}

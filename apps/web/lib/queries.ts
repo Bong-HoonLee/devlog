@@ -115,6 +115,23 @@ export async function getSeriesBySlug(slug: string) {
   });
 }
 
+export async function getRelatedPosts(postId: string, tagIds: string[]) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(POSTS_TAG);
+
+  return prisma.post.findMany({
+    where: {
+      id: { not: postId },
+      ...publicPostWhere(),
+      tags: { some: { tagId: { in: tagIds } } },
+    },
+    orderBy: { publishedAt: "desc" },
+    take: 3,
+    select: { title: true, slug: true, excerpt: true, publishedAt: true },
+  });
+}
+
 export async function getSitemapEntries() {
   "use cache";
   cacheLife("hours");

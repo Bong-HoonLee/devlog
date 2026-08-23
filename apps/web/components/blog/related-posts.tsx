@@ -1,6 +1,5 @@
 import { ProgressLink } from "@/components/ui/progress-link";
-import { prisma } from "@/lib/prisma";
-import { publicPostWhere } from "@/lib/post-visibility";
+import { getRelatedPosts } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
 interface RelatedPostsProps {
@@ -11,21 +10,7 @@ interface RelatedPostsProps {
 export async function RelatedPosts({ postId, tagIds }: RelatedPostsProps) {
   if (tagIds.length === 0) return null;
 
-  const related = await prisma.post.findMany({
-    where: {
-      id: { not: postId },
-      ...publicPostWhere(),
-      tags: { some: { tagId: { in: tagIds } } },
-    },
-    orderBy: { publishedAt: "desc" },
-    take: 3,
-    select: {
-      title: true,
-      slug: true,
-      excerpt: true,
-      publishedAt: true,
-    },
-  });
+  const related = await getRelatedPosts(postId, tagIds);
 
   if (related.length === 0) return null;
 
