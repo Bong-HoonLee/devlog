@@ -1,7 +1,7 @@
 import { renderMarkdown } from "@/lib/markdown";
 
 export async function ArticleBody({ content }: { content: string }) {
-  const html = await renderMarkdown(content);
+  const { html } = await renderMarkdown(content);
 
   return (
     <div

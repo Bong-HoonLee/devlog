@@ -1,15 +1,17 @@
-import { cache, Suspense } from "react";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { extractHeadings } from "@/lib/markdown";
+import { publicPostWhere } from "@/lib/post-visibility";
+import { POSTS_TAG } from "@/lib/queries";
 import { formatDate, readingTime } from "@/lib/utils";
 import { BASE_URL } from "@/lib/config";
-import { Toc } from "@/components/blog/toc";
 import { CommentList } from "@/components/comments/comment-list";
 import { SeriesNav } from "@/components/blog/series-nav";
 import { ArticleBody } from "@/components/blog/article-body";
+import { TocSection } from "@/components/blog/toc-section";
 import { PostLikeButton } from "@/components/blog/post-like-button";
 import { ViewCount } from "@/components/blog/view-count";
 import { CopyCodeButton } from "@/components/blog/copy-code-button";
@@ -26,24 +28,55 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Deduped across generateMetadata and the page render within a single request.
-const getPost = cache(async (slug: string) =>
-  prisma.post.findUnique({
-    where: { slug, status: "published" },
+// "use cache" 스코프 안에서는 publicPostWhere() 의 new Date() 가 허용됩니다
+// (결과에 수명이 붙으므로). 같은 요청 안의 generateMetadata / 페이지 렌더에서도 공유됩니다.
+// 예약 글은 최대 캐시 수명만큼 뒤에 공개되고, 글 수정/삭제 시에는
+// actions/posts.ts 의 revalidatePath 로 즉시 갱신됩니다.
+async function getPost(slug: string) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(POSTS_TAG);
+  cacheTag(`post-${slug}`);
+
+  return prisma.post.findFirst({
+    where: { slug, ...publicPostWhere() },
     include: {
       tags: { include: { tag: true } },
       series: {
         include: {
           posts: {
-            where: { status: "published" },
+            where: publicPostWhere(),
             orderBy: { publishedAt: "asc" },
             select: { id: true, title: true, slug: true },
           },
         },
       },
     },
-  })
-);
+  });
+}
+
+// 공개된 글은 전부 빌드 시점에 프리렌더합니다.
+// 그래야 목록에서 링크된 모든 글이 정적 셸을 갖고 <Link> 프리페치가 동작합니다.
+export async function generateStaticParams() {
+  const posts = await prisma.post.findMany({
+    where: publicPostWhere(),
+    select: { slug: true },
+    orderBy: { publishedAt: "desc" },
+  });
+
+  // Cache Components 는 빈 배열을 허용하지 않습니다(빌드 검증 대상이 없어지므로).
+  // 글이 아직 하나도 없는 DB 에서도 빌드가 되도록 존재하지 않는 slug 하나를 넘깁니다.
+  // 이 경로는 notFound() 로 404 가 되며 sitemap 에도 노출되지 않습니다.
+  if (posts.length === 0) return [{ slug: "__no-posts__" }];
+
+  return posts.map((post: { slug: string }) => ({ slug: post.slug }));
+}
+
+// params 를 Suspense 안으로 내려 셸을 만드는 대신, 이 라우트는 블로킹을 허용합니다.
+// 셸을 먼저 200 으로 흘려보내면 없는 글의 notFound() 가 상태 코드를 바꿀 수 없어
+// soft-404 가 되기 때문입니다. 위 목록에 있는 글은 이미 프리렌더되므로 즉시 뜨고,
+// 목록에 없는(삭제되었거나 존재하지 않는) slug 만 요청 시점에 막고 진짜 404 를 냅니다.
+export const instant = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -73,7 +106,6 @@ export default async function PostPage({ params }: Props) {
 
   if (!post) notFound();
 
-  const headings = extractHeadings(post.content);
   const postUrl = `${BASE_URL}/blog/${post.slug}`;
   const tagIds = post.tags.map((pt: { tagId: string }) => pt.tagId);
 
@@ -165,7 +197,9 @@ export default async function PostPage({ params }: Props) {
         </Suspense>
       </article>
 
-      <Toc headings={headings} />
+      <Suspense fallback={null}>
+        <TocSection content={post.content} />
+      </Suspense>
     </div>
     </>
   );

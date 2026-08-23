@@ -5,6 +5,10 @@ import { auth } from "@/lib/auth";
 import { getNotifications, markAllAsRead, markAsRead } from "@/actions/notifications";
 import { formatDate } from "@/lib/utils";
 
+// 인증이 필요한 화면이라 요청 시점 렌더가 정상입니다.
+// 프리페치 이득이 없으므로 즉시 렌더 검증에서 제외합니다.
+export const instant = false;
+
 export const metadata = { title: "알림" };
 
 export default async function NotificationsPage() {

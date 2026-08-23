@@ -1,13 +1,31 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getSeriesBySlug } from "@/actions/series";
+import { prisma } from "@/lib/prisma";
+import { publicPostWhere } from "@/lib/post-visibility";
+import { getSeriesBySlug } from "@/lib/queries";
 import { PostCard } from "@/components/blog/post-card";
 import { mapPostTags } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+// 공개 글이 있는 시리즈는 프리렌더해 프리페치가 동작하게 합니다.
+export async function generateStaticParams() {
+  const series = await prisma.series.findMany({
+    where: { posts: { some: publicPostWhere() } },
+    select: { slug: true },
+  });
+
+  if (series.length === 0) return [{ slug: "__no-series__" }];
+
+  return series.map((s: { slug: string }) => ({ slug: s.slug }));
+}
+
+// 없는 시리즈에 대해 notFound() 가 진짜 404 를 내려면 셸을 먼저 흘려보내면 안 됩니다.
+// (blog/[slug] 와 같은 이유)
+export const instant = false;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

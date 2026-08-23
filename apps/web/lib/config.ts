@@ -1,10 +1,28 @@
 // ─── Site ───
 // 배포 환경에서는 NEXT_PUBLIC_SITE_URL 을 반드시 설정해야 합니다.
-// 누락 시 OG 이미지 / sitemap / RSS / canonical 링크가 localhost 를 가리킵니다.
+// 누락 시 OG 이미지 / sitemap / RSS / canonical 링크가 잘못된 주소를 가리킵니다.
 // ?? 가 아니라 || 인 이유: CI 등에서 미설정 변수가 빈 문자열로 주입되면
 // ?? 는 이를 통과시켜 new URL("") 이 터집니다.
-export const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+function resolveBaseUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return explicit;
+
+  // Vercel 배포에서는 프로젝트 프로덕션 도메인으로 폴백합니다.
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercelHost) return `https://${vercelHost}`;
+
+  // 프로덕션 빌드에서 localhost 를 SEO 메타데이터에 굽는 것보다 즉시 실패가 낫습니다.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL 이 설정되지 않았습니다. " +
+        "sitemap / RSS / OG / canonical 링크가 잘못된 주소로 배포되는 것을 막기 위해 빌드를 중단합니다."
+    );
+  }
+
+  return "http://localhost:3000";
+}
+
+export const BASE_URL = resolveBaseUrl();
 
 // ─── Pagination ───
 export const POSTS_PER_PAGE = 10;

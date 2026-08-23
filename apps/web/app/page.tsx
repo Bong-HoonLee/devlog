@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getRecentPosts } from "@/lib/queries";
 import { PostCard } from "@/components/blog/post-card";
 import { SubscribeForm } from "@/components/blog/subscribe-form";
 import { AnimatedList } from "@/components/ui/animated-list";
@@ -6,15 +6,8 @@ import { FadeIn } from "@/components/ui/fade-in";
 import { mapPostTags } from "@/lib/utils";
 import type { PostWithTags } from "@/actions/posts";
 
-export const revalidate = 60;
-
 export default async function HomePage() {
-  const posts = await prisma.post.findMany({
-    where: { status: "published" },
-    orderBy: { publishedAt: "desc" },
-    take: 5,
-    include: { tags: { include: { tag: true } } },
-  });
+  const posts = await getRecentPosts(5);
 
   return (
     <div className="space-y-8">

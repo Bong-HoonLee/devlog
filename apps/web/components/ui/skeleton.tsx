@@ -1,3 +1,5 @@
+import { POSTS_PER_PAGE } from "@/lib/config";
+
 export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
@@ -31,7 +33,11 @@ export function PostListSkeleton({ count = 5 }: { count?: number }) {
   );
 }
 
-export function BlogListSkeleton({ count = 5 }: { count?: number }) {
+export function BlogListSkeleton({
+  count = POSTS_PER_PAGE,
+}: {
+  count?: number;
+}) {
   return (
     <div className="space-y-8">
       <div>

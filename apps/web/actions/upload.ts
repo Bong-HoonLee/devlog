@@ -8,6 +8,12 @@ import { UPLOAD } from "@/lib/config";
 export async function uploadImage(formData: FormData) {
   await requireAdmin();
 
+  if (!supabase) {
+    throw new Error(
+      "이미지 업로드가 설정되지 않았습니다. NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 를 확인해주세요."
+    );
+  }
+
   await checkRateLimit("upload");
 
   const file = formData.get("file") as File;

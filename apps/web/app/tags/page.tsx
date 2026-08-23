@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { getPublicTags } from "@/lib/queries";
 
 export const metadata = {
   title: "Tags",
@@ -7,18 +7,7 @@ export const metadata = {
 };
 
 export default async function TagsPage() {
-  const tags = await prisma.tag.findMany({
-    include: {
-      _count: {
-        select: {
-          posts: { where: { post: { status: "published" } } },
-        },
-      },
-    },
-    orderBy: { name: "asc" },
-  });
-
-  const filteredTags = tags.filter((tag: { id: string; name: string; slug: string; _count: { posts: number } }) => tag._count.posts > 0);
+  const filteredTags = await getPublicTags();
 
   return (
     <div className="space-y-8">

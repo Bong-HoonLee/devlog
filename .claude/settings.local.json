@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(pnpm approve-builds:*)",
-      "Bash(pnpm:*)"
+      "Bash(pnpm:*)",
+      "Bash(npx vercel:*)",
+      "Bash(npx turbo:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

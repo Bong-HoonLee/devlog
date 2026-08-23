@@ -2,35 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-utils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { slugify } from "@/lib/utils";
-
-export async function getSeries() {
-  return prisma.series.findMany({
-    orderBy: { title: "asc" },
-    include: {
-      posts: {
-        where: { status: "published" },
-        orderBy: { publishedAt: "asc" },
-        select: { id: true, title: true, slug: true, publishedAt: true },
-      },
-    },
-  });
-}
-
-export async function getSeriesBySlug(slug: string) {
-  return prisma.series.findUnique({
-    where: { slug },
-    include: {
-      posts: {
-        where: { status: "published" },
-        orderBy: { publishedAt: "asc" },
-        include: { tags: { include: { tag: true } } },
-      },
-    },
-  });
-}
+import { POSTS_TAG } from "@/lib/queries";
 
 export async function getAllSeries() {
   return prisma.series.findMany({
@@ -55,8 +30,8 @@ export async function createSeries(formData: FormData) {
     },
   });
 
+  updateTag(POSTS_TAG);
   revalidatePath("/admin/series");
-  revalidatePath("/series");
   redirect("/admin/series");
 }
 
@@ -77,8 +52,8 @@ export async function updateSeries(id: string, formData: FormData) {
     },
   });
 
+  updateTag(POSTS_TAG);
   revalidatePath("/admin/series");
-  revalidatePath("/series");
 }
 
 export async function deleteSeries(id: string) {
@@ -91,7 +66,7 @@ export async function deleteSeries(id: string) {
 
   await prisma.series.delete({ where: { id } });
 
+  updateTag(POSTS_TAG);
   revalidatePath("/admin/series");
-  revalidatePath("/series");
   redirect("/admin/series");
 }

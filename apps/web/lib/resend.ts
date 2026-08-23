@@ -4,4 +4,4 @@ const resendApiKey = process.env.RESEND_API_KEY;
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-export const EMAIL_FROM = process.env.RESEND_FROM_EMAIL ?? "noreply@resend.dev";
+export const EMAIL_FROM = process.env.RESEND_FROM_EMAIL || "noreply@resend.dev";

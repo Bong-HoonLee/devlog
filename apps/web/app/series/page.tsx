@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getSeries } from "@/actions/series";
+import { getPublicSeries } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: "시리즈",
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SeriesListPage() {
-  const seriesList = await getSeries();
+  const seriesList = await getPublicSeries();
 
   return (
     <div className="space-y-8">

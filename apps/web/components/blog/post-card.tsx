@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProgressLink } from "@/components/ui/progress-link";
 import { formatDate } from "@/lib/utils";
 
 interface PostCardProps {
@@ -25,12 +26,12 @@ export function PostCard({
           </time>
         )}
         <h2 className="text-xl font-semibold">
-          <Link
+          <ProgressLink
             href={`/blog/${slug}`}
             className="group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
           >
             {title}
-          </Link>
+          </ProgressLink>
         </h2>
       </div>
       {excerpt && (

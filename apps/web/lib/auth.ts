@@ -1,3 +1,4 @@
+import { cache } from "react";
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
@@ -61,3 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/auth/signin",
   },
 });
+
+// 한 요청 안에서 Header / 좋아요 / 댓글이 각각 auth() 를 부르면
+// 쿠키 읽기와 JWT 검증이 그 횟수만큼 반복됩니다. React cache 로 요청 단위 dedupe.
+export const getSession = cache(() => auth());

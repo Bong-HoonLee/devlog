@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { ProgressLink } from "@/components/ui/progress-link";
 import { prisma } from "@/lib/prisma";
+import { publicPostWhere } from "@/lib/post-visibility";
 import { formatDate } from "@/lib/utils";
 
 interface RelatedPostsProps {
@@ -13,7 +14,7 @@ export async function RelatedPosts({ postId, tagIds }: RelatedPostsProps) {
   const related = await prisma.post.findMany({
     where: {
       id: { not: postId },
-      status: "published",
+      ...publicPostWhere(),
       tags: { some: { tagId: { in: tagIds } } },
     },
     orderBy: { publishedAt: "desc" },
@@ -33,7 +34,7 @@ export async function RelatedPosts({ postId, tagIds }: RelatedPostsProps) {
       <h3 className="text-lg font-semibold">관련 글</h3>
       <div className="grid gap-4 sm:grid-cols-3">
         {related.map((post: { title: string; slug: string; excerpt: string | null; publishedAt: Date | null }) => (
-          <Link
+          <ProgressLink
             key={post.slug}
             href={`/blog/${post.slug}`}
             className="group rounded-lg border border-gray-200 p-4 transition-colors hover:border-blue-300 dark:border-gray-800 dark:hover:border-blue-700"
@@ -51,7 +52,7 @@ export async function RelatedPosts({ postId, tagIds }: RelatedPostsProps) {
                 {formatDate(post.publishedAt)}
               </p>
             )}
-          </Link>
+          </ProgressLink>
         ))}
       </div>
     </section>

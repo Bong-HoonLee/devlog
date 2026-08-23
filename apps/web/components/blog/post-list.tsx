@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { getPostPage } from "@/lib/queries";
 import { PostCard } from "@/components/blog/post-card";
 import { Pagination } from "@/components/blog/pagination";
 import { AnimatedList } from "@/components/ui/animated-list";
@@ -8,16 +8,7 @@ import { POSTS_PER_PAGE } from "@/lib/config";
 import type { PostWithTags } from "@/actions/posts";
 
 export async function PostList({ currentPage }: { currentPage: number }) {
-  const [posts, totalCount] = await Promise.all([
-    prisma.post.findMany({
-      where: { status: "published" },
-      orderBy: { publishedAt: "desc" },
-      include: { tags: { include: { tag: true } } },
-      skip: (currentPage - 1) * POSTS_PER_PAGE,
-      take: POSTS_PER_PAGE,
-    }),
-    prisma.post.count({ where: { status: "published" } }),
-  ]);
+  const { posts, totalCount } = await getPostPage(currentPage, POSTS_PER_PAGE);
 
   const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
 

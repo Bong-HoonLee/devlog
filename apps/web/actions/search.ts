@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { publicPostWhere } from "@/lib/post-visibility";
 import { SEARCH_RESULTS_LIMIT } from "@/lib/config";
 
 interface SearchResult {
@@ -24,7 +25,8 @@ export async function searchPosts(query: string): Promise<SearchResult[]> {
     const results = await prisma.$queryRaw<SearchResult[]>`
       SELECT "title", "slug", "excerpt"
       FROM "Post"
-      WHERE "status" = 'published'
+      WHERE ("status" = 'published'
+             OR ("status" = 'scheduled' AND "scheduledAt" <= now()))
         AND (
           setweight(to_tsvector('simple', coalesce("title", '')), 'A') ||
           setweight(to_tsvector('simple', coalesce("excerpt", '')), 'B') ||
@@ -43,11 +45,15 @@ export async function searchPosts(query: string): Promise<SearchResult[]> {
     // Fallback to simple search if tsquery fails (e.g., special characters)
     return prisma.post.findMany({
       where: {
-        status: "published",
-        OR: [
-          { title: { contains: query, mode: "insensitive" } },
-          { content: { contains: query, mode: "insensitive" } },
-          { excerpt: { contains: query, mode: "insensitive" } },
+        AND: [
+          publicPostWhere(),
+          {
+            OR: [
+              { title: { contains: query, mode: "insensitive" } },
+              { content: { contains: query, mode: "insensitive" } },
+              { excerpt: { contains: query, mode: "insensitive" } },
+            ],
+          },
         ],
       },
       select: { title: true, slug: true, excerpt: true },

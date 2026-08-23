@@ -1,18 +1,11 @@
-import { prisma } from "@/lib/prisma";
+import { getFeedPosts } from "@/lib/queries";
 import { BASE_URL } from "@/lib/config";
 
+// 수동 s-maxage 는 CDN 에 남아 revalidatePath 로 무효화할 수 없습니다.
+// Next 캐시(lib/queries.ts 의 "use cache")에 맡겨야
+// 글 생성/수정/삭제 시 즉시 갱신됩니다.
 export async function GET() {
-  const posts = await prisma.post.findMany({
-    where: { status: "published" },
-    orderBy: { publishedAt: "desc" },
-    take: 20,
-    select: {
-      title: true,
-      slug: true,
-      excerpt: true,
-      publishedAt: true,
-    },
-  });
+  const posts = await getFeedPosts(20);
 
   const items = posts
     .map(
@@ -42,7 +35,6 @@ export async function GET() {
   return new Response(rss, {
     headers: {
       "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
     },
   });
 }

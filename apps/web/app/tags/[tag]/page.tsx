@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { publicPostWhere } from "@/lib/post-visibility";
+import { getTagWithPosts } from "@/lib/queries";
 import { PostCard } from "@/components/blog/post-card";
 import { mapPostTags } from "@/lib/utils";
 
@@ -8,9 +10,24 @@ interface Props {
   params: Promise<{ tag: string }>;
 }
 
+// 공개 글이 달린 태그는 프리렌더해 프리페치가 동작하게 합니다.
+export async function generateStaticParams() {
+  const tags = await prisma.tag.findMany({
+    where: { posts: { some: { post: publicPostWhere() } } },
+    select: { slug: true },
+  });
+
+  if (tags.length === 0) return [{ tag: "__no-tags__" }];
+
+  return tags.map((tag: { slug: string }) => ({ tag: tag.slug }));
+}
+
+// 없는 태그에 대해 notFound() 가 진짜 404 를 내려면 셸을 먼저 흘려보내면 안 됩니다.
+export const instant = false;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tag: tagSlug } = await params;
-  const tag = await prisma.tag.findUnique({ where: { slug: tagSlug } });
+  const tag = await getTagWithPosts(tagSlug);
   if (!tag) return {};
   return { title: `${tag.name} 태그` };
 }
@@ -18,20 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TagPage({ params }: Props) {
   const { tag: tagSlug } = await params;
 
-  const tag = await prisma.tag.findUnique({
-    where: { slug: tagSlug },
-    include: {
-      posts: {
-        where: { post: { status: "published" } },
-        include: {
-          post: {
-            include: { tags: { include: { tag: true } } },
-          },
-        },
-        orderBy: { post: { publishedAt: "desc" } },
-      },
-    },
-  });
+  const tag = await getTagWithPosts(tagSlug);
 
   if (!tag) notFound();
 

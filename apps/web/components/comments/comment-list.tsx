@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { getComments } from "@/actions/comments";
 import { CommentForm } from "./comment-form";
 import { CommentItem } from "./comment-item";
@@ -10,7 +10,7 @@ interface CommentListProps {
 
 export async function CommentList({ postId, postSlug }: CommentListProps) {
   const [session, comments] = await Promise.all([
-    auth(),
+    getSession(),
     getComments(postId),
   ]);
 

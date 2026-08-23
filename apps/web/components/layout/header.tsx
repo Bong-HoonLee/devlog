@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { auth, signOut } from "@/lib/auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { NotificationBell } from "@/components/ui/notification-bell";
+import {
+  HeaderSession,
+  HeaderSessionFallback,
+} from "@/components/layout/header-session";
 
 const navItems = [
   { href: "/blog", label: "Blog" },
@@ -11,9 +13,9 @@ const navItems = [
   { href: "/about", label: "About" },
 ];
 
-export async function Header() {
-  const session = await auth();
-
+// 헤더 자체는 세션을 읽지 않는 정적 셸입니다. 세션 의존 UI 는 HeaderSession 으로 분리해
+// Suspense 안에서 스트리밍되므로, 이 레이아웃을 쓰는 모든 페이지가 프리렌더 가능합니다.
+export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/80">
       <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
@@ -31,51 +33,11 @@ export async function Header() {
             </Link>
           ))}
 
-          {session?.user.role === "admin" && (
-            <Link
-              href="/admin"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-            >
-              Admin
-            </Link>
-          )}
-
           <ThemeToggle />
 
-          {session ? (
-            <div className="flex items-center gap-3">
-              <NotificationBell />
-              {session.user.image && (
-                <Image
-                  src={session.user.image}
-                  alt={session.user.name ?? ""}
-                  width={28}
-                  height={28}
-                  className="rounded-full"
-                />
-              )}
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut({ redirectTo: "/" });
-                }}
-              >
-                <button
-                  type="submit"
-                  className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors"
-                >
-                  로그아웃
-                </button>
-              </form>
-            </div>
-          ) : (
-            <Link
-              href="/auth/signin"
-              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 transition-colors"
-            >
-              로그인
-            </Link>
-          )}
+          <Suspense fallback={<HeaderSessionFallback />}>
+            <HeaderSession />
+          </Suspense>
         </nav>
       </div>
     </header>

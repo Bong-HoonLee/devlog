@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ProgressLink } from "@/components/ui/progress-link";
 
 interface PaginationProps {
   currentPage: number;
@@ -32,12 +32,12 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
   return (
     <nav className="flex items-center justify-center gap-1" aria-label="페이지네이션">
       {currentPage > 1 && (
-        <Link
+        <ProgressLink
           href={href(currentPage - 1)}
           className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
         >
           이전
-        </Link>
+        </ProgressLink>
       )}
 
       {pages.map((page, i) =>
@@ -46,7 +46,7 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
             ...
           </span>
         ) : (
-          <Link
+          <ProgressLink
             key={page}
             href={href(page)}
             className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -56,17 +56,17 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
             }`}
           >
             {page}
-          </Link>
+          </ProgressLink>
         )
       )}
 
       {currentPage < totalPages && (
-        <Link
+        <ProgressLink
           href={href(currentPage + 1)}
           className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
         >
           다음
-        </Link>
+        </ProgressLink>
       )}
     </nav>
   );
