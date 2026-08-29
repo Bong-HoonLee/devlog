@@ -1,14 +1,29 @@
 // ─── Site ───
 // 배포 환경에서는 NEXT_PUBLIC_SITE_URL 을 반드시 설정해야 합니다.
 // 누락 시 OG 이미지 / sitemap / RSS / canonical 링크가 잘못된 주소를 가리킵니다.
-// ?? 가 아니라 || 인 이유: CI 등에서 미설정 변수가 빈 문자열로 주입되면
-// ?? 는 이를 통과시켜 new URL("") 이 터집니다.
+
+/**
+ * 환경변수로 들어온 주소를 정규화합니다.
+ *
+ * 대시보드나 CI 에 값을 붙여넣는 과정에서 공백·개행이 섞여 들어오는 일이 잦습니다.
+ * 실제로 프로덕션의 NEXT_PUBLIC_SITE_URL 끝에 개행이 들어가 있어
+ * robots.txt 의 Sitemap 지시자와 sitemap 의 모든 <loc>, RSS 링크, OG 주소가
+ * 전부 깨진 URL 로 나가고 있었습니다(구글이 sitemap 을 가져가지 못하는 상태).
+ *
+ * 빈 문자열을 undefined 로 바꾸는 이유: CI 는 미설정 secret 을 빈 문자열로
+ * 주입하는데, ?? 는 이를 통과시켜 new URL("") 이 터집니다.
+ * 끝의 / 도 제거합니다. `${BASE_URL}/blog` 형태로 이어붙이므로 // 가 생깁니다.
+ */
+function normalizeUrl(value: string | undefined): string | undefined {
+  return value?.trim().replace(/\/+$/, "") || undefined;
+}
+
 function resolveBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const explicit = normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL);
   if (explicit) return explicit;
 
   // Vercel 배포에서는 프로젝트 프로덕션 도메인으로 폴백합니다.
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const vercelHost = normalizeUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL);
   if (vercelHost) return `https://${vercelHost}`;
 
   // 프로덕션 빌드에서 localhost 를 SEO 메타데이터에 굽는 것보다 즉시 실패가 낫습니다.
