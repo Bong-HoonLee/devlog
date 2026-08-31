@@ -1,0 +1,26 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "Dev Blog" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=f1e5]:
+        - link "Blog" [ref=f1e6] [cursor=pointer]:
+          - /url: /blog
+        - link "Series" [ref=f1e7] [cursor=pointer]:
+          - /url: /series
+        - link "Tags" [ref=f1e8] [cursor=pointer]:
+          - /url: /tags
+        - link "About" [ref=f1e9] [cursor=pointer]:
+          - /url: /about
+        - button "테마 전환" [ref=f1e10]
+  - main [ref=f1e14]:
+    - generic [ref=f1e16]:
+      - generic [ref=f1e17]:
+        - heading "로그인" [level=1] [ref=f1e18]
+        - paragraph [ref=f1e19]: 소셜 계정으로 로그인하세요
+      - generic [ref=f1e20]:
+        - button "GitHub으로 로그인" [ref=f1e22]
+        - button "Google로 로그인" [ref=f1e26]
+  - contentinfo [ref=f1e32]:
+    - paragraph [ref=f1e34]: © 2026 Dev Blog. All rights reserved.
+  - alert [ref=f1e35]
