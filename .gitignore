@@ -8,3 +8,8 @@ dist/
 *.tsbuildinfo
 
 .vercel
+
+# 브라우저 자동화 산출물
+.playwright-mcp/
+*.png
+!public/**/*.png
